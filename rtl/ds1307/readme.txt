@@ -11,7 +11,7 @@ set_global_assignment -name VERILOG_FILE rtl/ds1307/serialInterface.v
 
 Instanciar en zxnext_sv con 
 
-module DS1307 (
+DS1307 RTCWrapper(
   .clk(CLK_48MHZ),
   .rst(reset),
   .sda(i2c_sda_o),

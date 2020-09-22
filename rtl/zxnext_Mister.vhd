@@ -160,16 +160,17 @@ entity ZXNEXT_Mister is
 		VBlank				: out   std_logic                      := '1';
 			
 		pal_mode				: in    std_logic                      := '0';
-		scandouble			: in    std_logic                      := '1'
+		scandouble			: in    std_logic                      := '1';
 --      csync_o           : out   std_logic                      := 'Z'
 
       -- HDMI
       -- hdmi_p_o          : out   std_logic_vector(3 downto 0);
       -- hdmi_n_o          : out   std_logic_vector(3 downto 0);
 
-      -- -- I2C (RTC and HDMI)
-      -- i2c_scl_io        : inout std_logic                      := 'Z';
-      -- i2c_sda_io        : inout std_logic                      := 'Z';
+      -- I2C (RTC and HDMI)
+--      i2c_scl_io        : inout std_logic                      := 'Z';
+		i2c_scl_o        : out std_logic;
+      i2c_sda_io        : inout std_logic                      := 'Z'
 
       -- -- ESP
       -- esp_gpio0_io      : inout std_logic                      := 'Z';
@@ -716,7 +717,7 @@ architecture rtl of ZXNEXT_Mister is
 
       --zxdos I2C (RTC and HDMI)
    signal    i2c_scl_io        : std_logic                      := 'Z';
-   signal    i2c_sda_io        : std_logic                      := 'Z';
+--   signal    i2c_sda_io        : std_logic                      := 'Z';
 
       --zxdos ESP
    signal    esp_gpio0_io      : std_logic                      := 'Z';
@@ -2000,6 +2001,8 @@ begin
    zxn_i2c_scl_n_i <= i2c_scl_io;
    zxn_i2c_sda_n_i <= i2c_sda_io;
 
+	i2c_scl_o <= zxn_i2c_scl_n_o;
+	
    -- spi sd card
    
    sd_cs0_n_o <= zxn_spi_ss_sd0_n;
