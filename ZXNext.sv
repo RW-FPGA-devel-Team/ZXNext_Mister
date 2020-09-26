@@ -127,7 +127,7 @@ module emu
 
 assign USER_OUT = '1;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
-
+assign {SDRAM_DQML,SDRAM_DQMH,SDRAM_nRAS,SDRAM_CLK} = '0;
 assign AUDIO_S = 0;  // 1 - signed audio samples, 0 - unsigned
 assign AUDIO_MIX = status[4:3];
 
@@ -251,7 +251,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1000)) hps_io
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
-wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56;
+wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56, CLK_140;
 wire pll_locked ;
 pll pll
 (
@@ -262,6 +262,7 @@ pll pll
 	.outclk_2  (CLK_56),    //  56 MHz
 	.outclk_3  (CLK_14),    //  24 MHz
 	.outclk_4  (CLK_7),     //   7 Mhz	
+	.outclk_5  (CLK_140),   // 140 Mhz	
 	.locked    (pll_locked)
 	
 );
@@ -318,15 +319,16 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .CLK_14              (CLK_14),
  .CLK_7               (CLK_7),
  .CLK_56              (CLK_56),
+ .CLK_140             (CLK_140),
  
  .LED                 (LED_USER),
  .MEMORY              (memory_size),
  
- .SRAM_A   				(SRAM_A),
- .SRAM_DQ  				(SRAM_DQ),
- .SRAM_nWE 				(SRAM_nWE),
- .SRAM_nOE 				(SRAM_nOE),
- .SRAM_nCE 				(SRAM_nCE),
+ .ram_addr_o			 (SRAM_A),
+ .ram_data_io			 (SRAM_DQ),
+ .ram_we_n_o			 (SRAM_nWE),
+ .ram_oe_n_o			 (SRAM_nOE),
+ .ram_ce_n_o			 (SRAM_nCE),
  
  .ps2_clk_i           (ps2_kbd_clk_in),
  .ps2_data_i          (ps2_kbd_data_in),
@@ -343,8 +345,10 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .sd_mosi_o           (sdmosi),
  .sd_miso_i           (sdmiso),
  
- .audio_left          (AUDIO_L),
- .audio_right         (AUDIO_R),
+ .audio_left          (),
+ .audio_right         (),
+ .zxn_audio_L         (audio_l), 
+ .zxn_audio_R         (audio_r),
  
  .ear_port_i          (~tape_in),
  
@@ -370,6 +374,15 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .HBlank					 (HBlank),
  .VBlank              (VBlank)
 
+);
+///////////////////////////////////////////////////
+
+reg [11:0] audio_l, audio_r;
+compressor compressor
+(
+  clk_sys,
+  audio_l, audio_r,
+  AUDIO_L, AUDIO_R
 );
 
 ///////////////////////////////////////////////////
@@ -458,7 +471,7 @@ assign SD_CS   = sdss   |  vsd_sel;
 assign SD_SCK  = sdclk  & ~vsd_sel;
 assign SD_MOSI = sdmosi & ~vsd_sel;
 
-reg sd_act;
+
 
 always @(posedge clk_sys) begin
 	reg old_mosi, old_miso;
@@ -467,10 +480,8 @@ always @(posedge clk_sys) begin
 	old_mosi <= sdmosi;
 	old_miso <= sdmiso;
 
-	sd_act <= 0;
 	if(timeout < 1000000) begin
 		timeout <= timeout + 1;
-		sd_act <= 1;
 	end
 
 	if((old_mosi ^ sdmosi) || (old_miso ^ sdmiso)) timeout <= 0;
@@ -484,6 +495,7 @@ wire tape_adc, tape_adc_act;
 assign tape_in = tape_adc_act & tape_adc;
 
 ltc2308_tape #(.CLK_RATE(28000000)) ltc2308_tape
+//ltc2308_tape ltc2308_tape
 (
   .clk(clk_sys),
   .ADC_BUS(ADC_BUS),

@@ -49,6 +49,7 @@ entity ZXNEXT_Mister is
 		CLK_14            : in    std_logic;
 		CLK_7             : in    std_logic;
 		CLK_56            : in    std_logic;
+		CLK_140           : in    std_logic;
 
 		LED					: out   std_logic                      := '1';
 		
@@ -62,25 +63,14 @@ entity ZXNEXT_Mister is
 --		ram_dout				: in    std_logic_vector(7 downto 0)   := (others => 'Z');
 --		ram_cs            : out   std_logic                      := '1'; 
 	
-      -- SRAM (AS7C34096)
+	
+	-- SRAM (AS7C34096)
+      ram_addr_o        : out   std_logic_vector(20 downto 0)  := (others => '0');
+      ram_data_io       : inout std_logic_vector( 7 downto 0)  := (others => 'Z');
+      ram_oe_n_o        : out   std_logic                      := '1';
+      ram_we_n_o        : out   std_logic                      := '1';
+      ram_ce_n_o        : out   std_logic                      := '1';
 	  
-	  SRAM_A             : out   std_logic_vector(20 downto 0)  := (others => '0');
-	  SRAM_DQ            : inout std_logic_vector(7 downto 0)  := (others => 'Z');
-	  SRAM_nWE           : out   std_logic                      := '1'; 
-	  SRAM_nOE           : out   std_logic                      := '0'; 
-	  SRAM_nCE           : out   std_logic                      := '0';
-	  
-	  -- SDRAM	(H57V256 = 16Mx16 = 32MB)
---      sdram_clk_o			: out   std_logic								:= '0';
---      sdram_cke_o			: out   std_logic								:= '0';
---      sdram_ad_o			: out   std_logic_vector(12 downto 0)	:= (others => '0');
---      sdram_da_io			: inout std_logic_vector(15 downto 0)	:= (others => 'Z');
---      sdram_ba_o			: out   std_logic_vector( 1 downto 0)	:= (others => '0');
---      sdram_dqm_o			: out   std_logic_vector( 1 downto 0)	:= (others => '1');
---      sdram_ras_o			: out   std_logic								:= '1';
---      sdram_cas_o			: out   std_logic								:= '1';
---      sdram_cs_o			: out   std_logic								:= '1';
---      sdram_we_o			: out   std_logic								:= '1';
 
       -- PS2
 		
@@ -111,6 +101,8 @@ entity ZXNEXT_Mister is
 		
 		audio_left 			: out   std_logic_vector(15 downto 0)  := (others => 'Z');
 		audio_right			: out   std_logic_vector(15 downto 0)  := (others => 'Z');
+		zxn_audio_L       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
+      zxn_audio_R       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
       -- K7
       ear_port_i        : in    std_logic;
     
@@ -238,19 +230,12 @@ architecture rtl of ZXNEXT_Mister is
    signal joy_renew              : std_logic := '1';                   -- For ZXDOS JOY 
    signal joy_count              : unsigned(7 downto 0) := X"00";      -- For ZXDOS JOY  
    ----------------------------------------------------------------------------------
-      -- using SDRAM
---    signal SRAM_A             :std_logic_vector(20 downto 0) := (others => '0'); 
---   signal ram_data_io_zxdos      :std_logic_vector(7 downto 0)  := (others => 'Z');
---   signal ram_we_n_o			      : std_logic;
+
 	signal ram1_oe_n_o			   : std_logic;
 	signal ram1_ce_n_o			   : std_logic;
 	
 	signal ram_data_output        :std_logic_vector(7 downto 0)  := (others => 'Z');
 	signal ram_data_input         :std_logic_vector(7 downto 0)  := (others => 'Z');
---   signal ram2_addr_o            : std_logic_vector(18 downto 0)  := (others => '0');
---   signal ram2_data_io_zxdos     : std_logic_vector(7 downto 0)  := (others => 'Z');
---   signal ram2_we_n_o            : std_logic;            
---	signal ram2_oe_n_o			   : std_logic;
 	
    signal ram_ce_zxdos			   :std_logic                      := '1';
    signal ram_we_n_o_zxdos       :std_logic                      := '1';
@@ -390,12 +375,13 @@ architecture rtl of ZXNEXT_Mister is
    signal sram_port_b_req        : std_logic;
    signal zxn_ram_b_req          : std_logic;
    signal sram_addr              : std_logic_vector(20 downto 0);
-   signal sram_cs_n              : std_logic;
-   signal sram_data_H            : std_logic;
+   signal sram_cs_n              : std_logic                     :='1';
+
    signal sram_rd                : std_logic;
+	signal sram_we_n_o            : std_logic;
 	
 	
-   signal sram_cs_n_active       : std_logic;
+   signal sram_cs_n_active       : std_logic                      := '1';
    signal sram_oe_n_active       : std_logic                      := '0';
    signal sram_addr_active       : std_logic_vector(20 downto 0)  := (others => '0');
    signal sram_data_active       : std_logic_vector(7 downto 0)  := (others => '0');
@@ -418,15 +404,7 @@ architecture rtl of ZXNEXT_Mister is
    signal sram_we_line           : std_logic_vector(3 downto 0)   := (others => '0');
    signal sram_we_intit				: std_logic                      := '0';
 	
-   --zxdos signal adaptation:  ---------------------------------------------------
-   
-   signal ram_data_io            : std_logic_vector(7 downto 0)  := (others => 'Z');
-   signal ram_oe_n_o             : std_logic                      := '1';
-   signal ram_ce_n_o             : std_logic;
-   
 	
-	signal ram_we_n_o             : std_logic                      := '1';
-   signal sram_addr_active_goma2 : std_logic_vector(20 downto 0)  := (others => '0');
 		
 	signal audioint_o             : std_logic                      := '1';
 	signal mic_port_o             : std_logic;
@@ -454,8 +432,8 @@ architecture rtl of ZXNEXT_Mister is
    signal zxn_audio_L_pre        : std_logic_vector(12 downto 0);
    signal zxn_audio_R_pre        : std_logic_vector(12 downto 0);
    
-   signal zxn_audio_L            : std_logic_vector(11 downto 0);
-   signal zxn_audio_R            : std_logic_vector(11 downto 0);
+   --signal zxn_audio_L            : std_logic_vector(11 downto 0);
+   --signal zxn_audio_R            : std_logic_vector(11 downto 0);
 
    signal zxn_audio_M_s          : std_logic_vector(13 downto 0);
    signal zxn_audio_M            : std_logic_vector(14 downto 0);
@@ -733,12 +711,7 @@ architecture rtl of ZXNEXT_Mister is
    signal    extras_io         : std_logic := 'Z';
   -------------------------------------------------------------------------
    
---	type ram_t is array (393216 downto 0) of std_logic_vector(7 downto 0);
---	signal ram_q : ram_t 
---      -- pragma translate_off
---      := (others => (others => '0'))
---      -- pragma translate_on
---	   ;
+
 begin
 
 	LED <= zxn_spi_ss_sd0_n;
@@ -1156,51 +1129,15 @@ begin
    -- ram_ce_n_o       : std_logic_vector(3 downto 0)
    
 	
-	-- inference of the memory
+
 	
---	main_memory : entity work.spram
---    generic map (
---    addr_width_g => 18,  -- 256 KB
---    data_width_g => 8   
---	)
---	port map (
---    clk_i  => CLK_28,
---    we_i   => not ram_we_n_o,
---	 addr_i => SRAM_A(17 downto 0),
---    data_i => ram_data_output,
---    data_o => ram_data_input
---   ); 
-	
-		
---	process (CLK_28)
---	begin
---		if rising_edge(CLK_28) then
-----			if (reset = '0') then
-------				ram_q(SRAM_A(19 downto 0)) <= (others => (others => '1'));
-----			else 
---			if (ram_we_n_o = '0' and sram_cs_n_active = '0') then
---				ram_q(to_integer(unsigned (SRAM_A(19 downto 0)))) <= ram_data_output;
---			end if;
---			ram_data_input <= ram_q(to_integer(unsigned (SRAM_A(19 downto 0))));
---		end if;
---	end process;
-	
-	
- 
---  ram_addr <= SRAM_A(20 downto 0);
---  ram_din <= ram_data_output;
---  ram_data_input <= ram_dout;
---  ram_rd <= not sram_oe_n_active;
-----  ram_rd <= ram_we_n_o;
---  ram_we <= not ram_we_n_o;
---  ram_cs <= not sram_cs_n_active;
+
  
 	
    -- Determine active port and sram signals for next memory cycle
    
    zxn_ram_b_req <= (zxn_ram_b_req_t xor sram_port_b_req) and not zxn_ram_a_req;   -- 0 = Port A (or nothing), 1 = Port B
-   sram_addr <= zxn_ram_a_addr when zxn_ram_b_req = '0' else zxn_ram_b_addr;  
-   
+   sram_addr <= (zxn_ram_a_addr(20) & zxn_ram_a_addr(0) & zxn_ram_a_addr(19 downto 1)) when zxn_ram_b_req = '0' else (zxn_ram_b_addr(20) & zxn_ram_b_addr(0) & zxn_ram_b_addr(19 downto 1));
    -- Track port B request which operates on a toggled signal
    
    process (CLK_28)
@@ -1213,35 +1150,19 @@ begin
    end process;
 
 	
-   -- Select active sram chip
+-- Select active sram chip
    
---   process (zxn_ram_a_req, zxn_ram_b_req, sram_addr)
---   begin
---      if ((zxn_ram_a_req = '1' or zxn_ram_b_req = '1') and MEMORY = '1' ) then
---		      -- 1 MB
---       	case sram_addr(20) is
---            when '0'   =>  sram_cs_n <= '0';
---            when others =>  sram_cs_n <= '1';
---         end case; 
---      elsif ((zxn_ram_a_req = '1' or zxn_ram_b_req = '1') and MEMORY= '0' ) then
---			 -- 2 MB
---          sram_cs_n <= '0';
---      else
---         sram_cs_n <= '1';			
---      end if;
---
---   end process;
-
-    process (zxn_ram_a_req, zxn_ram_b_req, sram_addr)
-    begin
-         if (zxn_ram_a_req = '1' or zxn_ram_b_req = '1') then
-	           sram_cs_n <= '0';
-         else
-              sram_cs_n <= '1';                     
-         end if;
-    end process;
+   process (zxn_ram_a_req, zxn_ram_b_req)
+   begin
+      if zxn_ram_a_req = '1' or zxn_ram_b_req = '1' then
+         sram_cs_n <= '0';
+      else
+         sram_cs_n <= '1';
+      end if;
+   end process;
 
 
+ 
 
 	 sram_rd <= (zxn_ram_a_rd or not zxn_ram_a_req) when zxn_ram_b_req = '0' else '1';
    
@@ -1293,7 +1214,7 @@ begin
       end if;
    end process;
    
-   sram_data_in_byte <= sram_data_in;
+   --sram_data_in_byte <= sram_data_in;
 
    
    --
@@ -1302,7 +1223,7 @@ begin
    begin
       if rising_edge(CLK_28) then
          if sram_port_a_read = '1' then
-            sram_port_a_dat <= sram_data_in_byte;
+            sram_port_a_dat <= sram_data_in; --sram_data_in_byte;
          end if;
       end if;
    end process;
@@ -1311,66 +1232,51 @@ begin
    begin
       if rising_edge(CLK_28) then
          if sram_port_b_read = '1' then
-            sram_port_b_dat <= sram_data_in_byte;
+            sram_port_b_dat <= sram_data_in; --sram_data_in_byte;
          end if;
       end if;
    end process;
    
-   sram_port_a_do <= sram_data_in_byte when sram_port_a_read = '1' else sram_port_a_dat;
-   sram_port_b_do <= sram_data_in_byte when sram_port_b_read = '1' else sram_port_b_dat;
+   sram_port_a_do <= sram_data_in when sram_port_a_read = '1' else sram_port_a_dat; -- sram_data_in_byte
+   sram_port_b_do <= sram_data_in when sram_port_b_read = '1' else sram_port_b_dat; -- sram_data_in_byte
    
    -- Data out (W)
    -- 28MHz cycle is partitioned into two periods some of which will carry we signal
 
-	process (CLK_56)  
+process (CLK_140)
    begin
-      if rising_edge(CLK_56) then
-         if sram_oe_n_active = '1' and sram_we_intit = '0' then
-            ram_we_n_o   <= '0';
-				sram_we_intit<= '1';	
-			elsif sram_we_intit = '1' then
-				ram_we_n_o   <= '1';
-				sram_we_intit<= '0';
-		   end if;
-					
+      if rising_edge(CLK_140) then
+         if sram_oe_n_active = '1' and sram_we_line = "0000" then
+            sram_we_line <= "1111";
+            sram_we_n_o <= '0';
+         else
+            sram_we_line <= sram_we_line(2 downto 0) & '0';
+        if sram_we_line(3 downto 1) = "111" then
+               sram_we_n_o <= '0';
+            else
+               sram_we_n_o <= '1';
+            end if;
+         end if;
       end if;
    end process;
 
-   
-   
    -- Connect I/O signals
    
    -- make sure xst is pushing registers into io blocks
    
-	--SRAM_A <= "00" & sram_addr_active(18 downto 0);  -- <----------------------------- 512 kb--------------
-   SRAM_A <= sram_addr_active(20 downto 0);  -- <----------------------------- 2 MB--------------
-   ram_oe_n_o <= sram_oe_n_active;
-   ram_ce_n_o <= sram_cs_n_active;
---   ram1_oe_n_o<= sram_oe_n_active;
---	  ram1_ce_n_o<= sram_cs_n_active;
 	
-	  SRAM_nWE <= ram_we_n_o;
-	-- SRAM_nOE <= sram_oe_n_active;
-	-- SRAM_nCE<= sram_cs_n_active;
-
-	
+  
+   ram_addr_o   <= sram_addr_active;  
+	ram_data_io  <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
+	ram_oe_n_o   <= sram_oe_n_active;
+   ram_ce_n_o   <= (sram_cs_n_active);
+	ram_we_n_o   <= sram_we_n_o;
 	
    zxn_ram_a_di <= sram_port_a_do;
    zxn_ram_b_di <= sram_port_b_do;
-
+   
 	
-	-- To Work with SRAM	
-	SRAM_DQ  <= sram_data_active when ram_we_n_o = '0' and sram_cs_n_active = '0'  else (others => 'Z');
-   ram_data_io <= SRAM_DQ       when sram_oe_n_active = '0' and sram_cs_n_active = '0'  else (others => 'Z');
 		
- 	-- Only to work with instanciated BRAM
---  ram_data_output  <= sram_data_active when ram_we_n_o = '0'      and sram_cs_n_active = '0'  else (others => 'Z'); -- write to memory
---	 ram_data_io      <= ram_data_input   when sram_oe_n_active = '0' and sram_cs_n_active = '0'  else (others => 'Z');  -- read form memory
-	 
-	 -- only to work with instance SDRAM
---	 ram_data_output  <= sram_data_active when ram_we_n_o = '0'      and sram_cs_n_active = '0'  else (others => 'Z');  -- write to memory
---	 ram_data_io      <= ram_data_input   when ram_we_n_o = '1'      and sram_cs_n_active = '0'  else (others => 'Z');  -- read form memory
-
 	
    ------------------------------------------------------------
    -- AUDIO ---------------------------------------------------
@@ -1383,100 +1289,7 @@ begin
 	end process;
 	
 		
-    -- tape save
---   
---   process (CLK_28)
---   begin
---      if rising_edge(CLK_28) then
---         mic_port <= zxn_tape_mic;
---      end if;
---   end process;
---   
---   mic_port_o <= mic_port;
-   
-   -- audio dac
-
---   audio_L : entity work.dac
---   generic map
---   (
---      msbi_g   => 11
---   )
---   port map
---   (
---      clk_i    => CLK_28,
---      res_i    => reset,
---      dac_i    => zxn_audio_L(11 downto 0),
---      dac_o    => audioext_l
---   );
---   
---   process (CLK_28)
---   begin
---      if rising_edge(CLK_28) then
---         audioext_l_o <= audioext_l;
---      end if;
---   end process;
---   
---   audio_R : entity work.dac
---   generic map
---   (
---      msbi_g   => 11
---   )
---   port map
---   (
---      clk_i    => CLK_28,
---      res_i    => reset,
---      dac_i    => zxn_audio_R(11 downto 0),
---      dac_o    => audioext_r
---   );
---   
---   process (CLK_28)
---   begin
---      if rising_edge(CLK_28) then
---         audioext_r_o <= audioext_r;
---      end if;
---   end process;
-
-   -- optional internal speaker
-
---   process (CLK_28)
---   begin
---      if rising_edge(CLK_28) then
---         audioint <= audioext_m and zxn_speaker_en;
---      end if;
---   end process;
---   
---   audioint_o <= audioint;
-
-   -- VBE(on) = 0.55 V
-   -- VBE(max) = 0.8 V
-   -- 17-bit dac = 21760 offset, signal range = 0:9929
-   
---   zxn_audio_M_s <= ('0' & zxn_audio_L_pre) + ('0' & zxn_audio_R_pre);
---   
---   process (CLK_28)
---   begin
---      if rising_edge(CLK_28) then
---         if zxn_speaker_beep = '1' then
---            zxn_audio_M <= zxn_audio_ear & (not zxn_audio_ear) & '0' & zxn_audio_mic & "00000000000";
---         else
---            zxn_audio_M <= (('0' & zxn_audio_M_s(13 downto 7)) + "01010101") & zxn_audio_M_s(6 downto 0);
---         end if;
---      end if;
---   end process;
---   
---   audio_M : entity work.dac
---   generic map
---   (
---      msbi_g   => 16     -- only using a small range of 16.7% through 24.2%
---   )
---   port map
---   (
---      clk_i    => CLK_28,
---      res_i    => reset,
---      dac_i    => '0' & zxn_audio_M & '0',
---      dac_o    => audioext_m
---   );
-
+ 
 
    ------------------------------------------------------------
    -- VIDEO : VGA ---------------------------------------------
@@ -1600,82 +1413,7 @@ begin
       end if;
    end process;
    
-   -- HDMI
-   
-   -- hdmi_frame: entity work.hdmi_frame 
-   -- port map (
-   
-      -- clock_i     => CLK_14,
-      -- clock2x_i   => CLK_28,
-      -- reset_i     => zxn_hdmi_reset,
-      -- scanlines_i => zxn_video_scanlines,
-      -- rgb_i       => zxn_rgb,
-      -- hsync_i     => zxn_rgb_hs_n,
-      -- vsync_i     => zxn_rgb_vs_n,
-      -- hblank_n_i  => zxn_rgb_hb_n,
-      -- vblank_n_i  => zxn_rgb_vb_n,
-      -- timing_i    => zxn_video_mode,
-      
-      -- --outputs
-      -- rgb_o       => toHDMI_rgb,
-      -- hsync_o     => toHDMI_hsync,
-      -- vsync_o     => toHDMI_vsync,
-      -- blank_o     => toHDMI_blank,
-      
-      -- -- config values 
-      -- h_visible   => h_visible_s,
-      -- hsync_start => hsync_start_s,
-      -- hsync_end   => hsync_end_s,
-      -- hcnt_end    => hcnt_end_s,
-      -- --
-      -- v_visible   => v_visible_s,
-      -- vsync_start => vsync_start_s,
-      -- vsync_end   => vsync_end_s,
-      -- vcnt_end    => vcnt_end_s
-   -- );
-    
-   -- hdmi: entity work.hdmi
-   -- generic map
-   -- (
-      -- FREQ           => 27000000,   -- pixel clock frequency
-      -- FS             => 48000,      -- audio sample rate - should be 32000, 41000 or 48000 = 48KHz
-      -- CTS            => 27000,      -- CTS = Freq(pixclk) * N / (128 * Fs)
-      -- N              => 6144        -- N = 128 * Fs /1000,  128 * Fs /1500 <= N <= 128 * Fs /300 (Check HDMI spec 7.2 for details)
-   -- )
-   -- port map
-   -- (
-      -- I_CLK_PIXEL    => CLK_28,
-      -- I_R            => toHDMI_rgb(8 downto 6) & toHDMI_rgb(8 downto 6) & toHDMI_rgb(8 downto 7),
-      -- I_G            => toHDMI_rgb(5 downto 3) & toHDMI_rgb(5 downto 3) & toHDMI_rgb(5 downto 4),
-      -- I_B            => toHDMI_rgb(2 downto 0) & toHDMI_rgb(2 downto 0) & toHDMI_rgb(2 downto 1),
-      -- I_BLANK        => toHDMI_blank,
-      -- I_HSYNC        => toHDMI_hsync,
-      -- I_VSYNC        => toHDMI_vsync,
-      
-      -- -- PCM audio
-      
-      -- I_AUDIO_ENABLE => zxn_hdmi_audio,
-      -- I_AUDIO_PCM_L  => (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000",
-      -- I_AUDIO_PCM_R  => (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000",
-      
-      -- -- TMDS parallel pixel synchronous outputs (serialize LSB first)
-      
-      -- O_RED          => tdms_r,
-      -- O_GREEN        => tdms_g,
-      -- O_BLUE         => tdms_b
-   -- );
-
-   -- hdmio: entity work.hdmi_out_xilinx
-   -- port map (
-      -- clock_pixel_i     => CLK_28,
-      -- clock_tdms_i      => CLK_HDMI,
-      -- clock_tdms_n_i    => CLK_HDMI_n,
-      -- red_i             => tdms_r,
-      -- green_i           => tdms_g,
-      -- blue_i            => tdms_b,
-      -- tmds_out_p        => hdmi_p_o,
-      -- tmds_out_n        => hdmi_n_o
-   -- );
+ 
 
    ------------------------------------------------------------
    -- BUTTONS, JOYSTICKS, MOUSE, KEYBOARD ---------------------
@@ -1773,52 +1511,7 @@ begin
    
    zxn_buttons <= not (btn_drive_divmmc_db_n & btn_m1_multiface_db_n);
    
-   -- joysticks
-   -- md controller reads all joystick types
-   
-   -- process (CLK_28)
-   -- begin
-      -- if rising_edge(CLK_28) then
-         -- rgb_hs_n_dly <= rgb_hs_n_dly(0) & zxn_rgb_hs_n;
-      -- end if;
-   -- end process;
-   
-   -- CLK_28_HSYNC_EN <= rgb_hs_n_dly(1) and not rgb_hs_n_dly(0);
-   
-   -- jc_2 : entity work.md6_joystick_connector_x2
-   -- port map
-   -- (
-      -- i_reset        => reset,
-      
-      -- i_CLK_28       => CLK_28,
-      -- i_CLK_EN       => CLK_28_HSYNC_EN,  -- approximately 15kHz enable
-      
-      -- i_joy_1_n      => joyp1_i_q,
-      -- i_joy_2_n      => joyp2_i_q,
-      -- i_joy_3_n      => joyp3_i_q,
-      -- i_joy_4_n      => joyp4_i_q,
-      -- i_joy_6_n      => joyp6_i_q,
-      -- i_joy_9_n      => joyp9_i_q,
-      
-      -- i_io_mode_en      => zxn_joy_io_mode_en(0),
-      -- i_io_mode_lr      => zxn_joy_io_mode_lr,
-      -- i_io_mode_pin_7   => io_mode_pin_7,
-
-      -- o_joy_7        => joyp7_o,          -- md protocol
-      -- o_joy_select   => joysel_o,         -- joystick selection mux (0 = left, 1 = right)
-
-      -- o_joy_left     => zxn_joy_left,     -- active high  X Z Y START A C B U D L R
-      -- o_joy_right    => zxn_joy_right     -- active high  X Z Y START A C B U D L R
-   -- );
-   
-   -- io_mode_pin_7 <= zxn_joy_io_mode_pin_7 when zxn_joy_io_mode_en(1) = '0' else clk_28_div(2) when zxn_joy_io_mode_pin_7 = '1' else clk_28_div(10);
-   
-   -- ps2 mouse
-   
-   -- todo: add sensitivity adjustment for old ps2 mice
-   -- todo: look at driving a 1 when mouse outputs a 1
-   
-
+ 
 
 	ps2_mouse_data_in <= ps2_pin2_i when zxn_ps2_mode = '0' else ps2_data_i;
    ps2_mouse_clock_in <= ps2_pin6_i when zxn_ps2_mode = '0' else ps2_clk_i;
@@ -2083,72 +1776,7 @@ begin
    
    bus_clk35_o <= 'Z' when zxn_bus_en = '0' and zxn_bus_clken = '0' else bus_clk_cpu;
    
--- OBUFT_i0 : OBUFT
--- port map
--- (
---    I => CLK_3M5_CONT,
---    O => bus_clk35_o,
---    T => not (zxn_bus_en or zxn_bus_clken)
--- );
 
--- BUFGMUX1_i3 : BUFGMUX_1
--- generic map
--- (
---    CLK_SEL_TYPE => "ASYNC"
--- )
--- port map
--- (
---    I0 => CLK_3M5_CONT,
---    I1 => CLK_CPU,
---    S => zxn_bus_en,
---    O => zxn_bus_clk
--- );
---
--- ODDR2_i0 : ODDR2
--- generic map
--- (
---    DDR_ALIGNMENT => "NONE",
---    INIT => '1',
---    SRTYPE => "SYNC"
--- )
--- port map
--- (
---    Q => bus_clk_cpu,
---    C0 => zxn_bus_clk,
---    C1 => not zxn_bus_clk,
---    CE => '1',
---    D0 => '1',
---    D1 => '0',
---    R => '0',
---    S => '0'
--- );
--- 
--- ODDR2_i1 : ODDR2
--- generic map
--- (
---    DDR_ALIGNMENT => "NONE",
---    INIT => '1',
---    SRTYPE => "SYNC"
--- )
--- port map
--- (
---    Q => bus_clk_cpu_en_n,
---    C0 => zxn_bus_clk,
---    C1 => not zxn_bus_clk,
---    CE => '1',
---    D0 => not (zxn_bus_en or zxn_bus_clken),
---    D1 => not (zxn_bus_en or zxn_bus_clken),
---    R => '0',
---    S => '0'
--- );
---
--- OBUFT_i0 : OBUFT
--- port map
--- (
---    I => bus_clk_cpu,
---    O => bus_clk35_o,
---    T => bus_clk_cpu_en_n
--- );
 
    ------------------------------------------------------------
    -- ESP GPIO ------------------------------------------------
