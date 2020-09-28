@@ -52,17 +52,8 @@ entity ZXNEXT_Mister is
 		CLK_140           : in    std_logic;
 
 		LED					: out   std_logic                      := '1';
+				
 		
-		MEMORY            : in    std_logic;
-		
-		
---		ram_addr				: out   std_logic_vector(20 downto 0)  := (others => '0');
---		ram_din				: out   std_logic_vector(7 downto 0)   := (others => 'Z');
---		ram_we				: out   std_logic                      := '1'; 
---		ram_rd            : out   std_logic                      := '1'; 
---		ram_dout				: in    std_logic_vector(7 downto 0)   := (others => 'Z');
---		ram_cs            : out   std_logic                      := '1'; 
-	
 	
 	-- SRAM (AS7C34096)
       ram_addr_o        : out   std_logic_vector(20 downto 0)  := (others => '0');
@@ -1038,6 +1029,7 @@ begin
       O => CLK_CPU
    );
 
+	
    -- Clock Enables
    
    process (CLK_28)
@@ -1137,8 +1129,8 @@ begin
    -- Determine active port and sram signals for next memory cycle
    
    zxn_ram_b_req <= (zxn_ram_b_req_t xor sram_port_b_req) and not zxn_ram_a_req;   -- 0 = Port A (or nothing), 1 = Port B
-   sram_addr <= (zxn_ram_a_addr(20) & zxn_ram_a_addr(0) & zxn_ram_a_addr(19 downto 1)) when zxn_ram_b_req = '0' else (zxn_ram_b_addr(20) & zxn_ram_b_addr(0) & zxn_ram_b_addr(19 downto 1));
-   -- Track port B request which operates on a toggled signal
+   sram_addr <= zxn_ram_a_addr when zxn_ram_b_req = '0' else zxn_ram_b_addr; 
+ -- Track port B request which operates on a toggled signal
    
    process (CLK_28)
    begin
@@ -1152,14 +1144,14 @@ begin
 	
 -- Select active sram chip
    
-   process (zxn_ram_a_req, zxn_ram_b_req)
-   begin
-      if zxn_ram_a_req = '1' or zxn_ram_b_req = '1' then
-         sram_cs_n <= '0';
-      else
-         sram_cs_n <= '1';
-      end if;
-   end process;
+--   process (zxn_ram_a_req, zxn_ram_b_req)
+--   begin
+--      if zxn_ram_a_req = '1' or zxn_ram_b_req = '1' then
+--         sram_cs_n <= '0';
+--      else
+--         sram_cs_n <= '1';
+--      end if;
+--   end process;
 
 
  
@@ -1243,33 +1235,29 @@ begin
    -- Data out (W)
    -- 28MHz cycle is partitioned into two periods some of which will carry we signal
 
-process (CLK_140)
+	process (CLK_56)  
    begin
-      if rising_edge(CLK_140) then
-         if sram_oe_n_active = '1' and sram_we_line = "0000" then
-            sram_we_line <= "1111";
-            sram_we_n_o <= '0';
-         else
-            sram_we_line <= sram_we_line(2 downto 0) & '0';
-        if sram_we_line(3 downto 1) = "111" then
-               sram_we_n_o <= '0';
-            else
-               sram_we_n_o <= '1';
-            end if;
-         end if;
+      if rising_edge(CLK_56) then
+         if sram_oe_n_active = '1' and sram_we_intit = '0' then
+            sram_we_n_o   <= '0';
+				sram_we_intit<= '1';	
+			elsif sram_we_intit = '1' then
+				sram_we_n_o   <= '1';
+				sram_we_intit<= '0';
+		   end if;
+					
       end if;
    end process;
-
+	
    -- Connect I/O signals
    
    -- make sure xst is pushing registers into io blocks
    
-	
   
    ram_addr_o   <= sram_addr_active;  
 	ram_data_io  <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
 	ram_oe_n_o   <= sram_oe_n_active;
-   ram_ce_n_o   <= (sram_cs_n_active);
+   ram_ce_n_o   <= '0'; --sram_cs_n_active;
 	ram_we_n_o   <= sram_we_n_o;
 	
    zxn_ram_a_di <= sram_port_a_do;
@@ -1283,12 +1271,10 @@ process (CLK_140)
    ------------------------------------------------------------
 
 	process (CLK_28)
-	begin
-		audio_left  <= (not zxn_audio_L_pre(12)) & zxn_audio_L_pre(11 downto 0) & "000";
-      audio_right <= (not zxn_audio_R_pre(12)) & zxn_audio_R_pre(11 downto 0) & "000";
-	end process;
-	
-		
+  begin
+     audio_left  <= zxn_audio_L_pre(11 downto 0) & zxn_audio_L_pre(11 downto 8);
+     audio_right <= zxn_audio_R_pre(11 downto 0) & zxn_audio_L_pre(11 downto 8);
+  end process;
  
 
    ------------------------------------------------------------
@@ -2072,5 +2058,4 @@ process (CLK_140)
 	zxn_joy_left   <= joystick1(10 downto 0); -- active high =  X Z Y START A C B U D L R
 	zxn_joy_right	<= joystick2(10 downto 0); 
 	
- 
 end architecture;

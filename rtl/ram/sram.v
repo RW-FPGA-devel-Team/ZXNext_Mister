@@ -38,15 +38,6 @@ assign SDRAM_DQ[ 5] = SRAM_nWE ? 1'bZ : SRAM_DQ[6];
 assign SDRAM_DQ[ 4] = SRAM_nWE ? 1'bZ : SRAM_DQ[7];
 
 
-//assign SRAM_DQ[ 0] = SRAM_nWE ? SDRAM_DQ[11] : 1'bZ;
-//assign SRAM_DQ[ 1] = SRAM_nWE ? SDRAM_DQ[10] : 1'bZ;
-//assign SRAM_DQ[ 2] = SRAM_nWE ? SDRAM_DQ[ 8] : 1'bZ;
-//assign SRAM_DQ[ 3] = SRAM_nWE ? SDRAM_DQ[ 9] : 1'bZ;
-//assign SRAM_DQ[ 4] = SRAM_nWE ? SDRAM_DQ[ 7] : 1'bZ;
-//assign SRAM_DQ[ 5] = SRAM_nWE ? SDRAM_DQ[ 6] : 1'bZ;
-//assign SRAM_DQ[ 6] = SRAM_nWE ? SDRAM_DQ[ 5] : 1'bZ;
-//assign SRAM_DQ[ 7] = SRAM_nWE ? SDRAM_DQ[ 4] : 1'bZ;
-
 assign SRAM_DQ[ 0] = SRAM_nOE ? 1'bZ : SDRAM_DQ[11];
 assign SRAM_DQ[ 1] = SRAM_nOE ? 1'bZ : SDRAM_DQ[10];
 assign SRAM_DQ[ 2] = SRAM_nOE ? 1'bZ : SDRAM_DQ[ 8];

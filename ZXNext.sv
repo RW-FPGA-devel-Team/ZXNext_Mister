@@ -161,7 +161,6 @@ localparam CONF_STR = {
 	"-;",
 	"OD,Joysticks Swap,No,Yes;",
 	"-;",
-	"O8,RAM Memory,2 MB,1 Mb;", 
 	"TF,Soft Reset;",
 	"T0,Hard Reset;",
 	"R0,Reset and close OSD;",
@@ -251,8 +250,10 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1000)) hps_io
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
-wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56, CLK_140;
+wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56, CLK_140, CLK_SPI;
 wire pll_locked ;
+wire reset;
+
 pll pll
 (
 	.refclk(CLK_50M),
@@ -267,7 +268,7 @@ pll pll
 	
 );
 
-//wire reset = RESET | status[0] | buttons[1] | !pll_locked | (status[14] && img_mounted);
+assign reset = RESET | status[0] | buttons[1] | !pll_locked | (status[14] && img_mounted);
 
 
 
@@ -289,26 +290,6 @@ Mister_sRam sRam
 );
 
 
-// BRAM manual implementation //////////////////////////////////////////////////
-reg        reset = 0;
-reg [20:0] clr_addr = 0;
-always @(posedge clk_sys) begin
-
-	if(~&clr_addr) clr_addr <= clr_addr + 1'd1;  // running all addresses
-	else reset <= 0;
-
-	if(RESET | status[0] | buttons[1] | !pll_locked | (status[14] && img_mounted)) begin
-		clr_addr <= 0;
-		reset <= 1;
-	end
-	
-end
-
-
-
-
-reg memory_size = 0;
-always @(posedge clk_sys) if(reset) memory_size <= status[8];
 
 //////////////////////////////////////////////////////////////////
 
@@ -322,7 +303,6 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .CLK_140             (CLK_140),
  
  .LED                 (LED_USER),
- .MEMORY              (memory_size),
  
  .ram_addr_o			 (SRAM_A),
  .ram_data_io			 (SRAM_DQ),
@@ -361,7 +341,7 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .hard_reset          (reset),
  .soft_reset          (status[15]),
  
- .pal_mode            (!status[2]),
+ .pal_mode            (1'b1),
  
  .scandouble          (1'b1),
  .esp_rx_i            (UART_RXD),
@@ -381,8 +361,10 @@ reg [11:0] audio_l, audio_r;
 compressor compressor
 (
   clk_sys,
-  audio_l, audio_r,
-  AUDIO_L, AUDIO_R
+  audio_l,
+  audio_r,
+  AUDIO_L,
+  AUDIO_R
 );
 
 ///////////////////////////////////////////////////
@@ -459,7 +441,7 @@ wire vsdmiso;
 sd_card sd_card
 (
 	.*,
-	.clk_spi(CLK_56),
+	.clk_spi(CLK_14),
 	.sdhc(1),
 	.sck(sdclk),
 	.ss(sdss | ~vsd_sel),
@@ -495,7 +477,6 @@ wire tape_adc, tape_adc_act;
 assign tape_in = tape_adc_act & tape_adc;
 
 ltc2308_tape #(.CLK_RATE(28000000)) ltc2308_tape
-//ltc2308_tape ltc2308_tape
 (
   .clk(clk_sys),
   .ADC_BUS(ADC_BUS),
