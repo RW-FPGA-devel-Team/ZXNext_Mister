@@ -250,7 +250,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1000)) hps_io
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
-wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56, CLK_140, CLK_SPI;
+wire clk_sys,CLK_28_n, CLK_14, CLK_7, CLK_56;
 wire pll_locked ;
 wire reset;
 
@@ -263,7 +263,6 @@ pll pll
 	.outclk_2  (CLK_56),    //  56 MHz
 	.outclk_3  (CLK_14),    //  24 MHz
 	.outclk_4  (CLK_7),     //   7 Mhz	
-	.outclk_5  (CLK_140),   // 140 Mhz	
 	.locked    (pll_locked)
 	
 );
@@ -300,7 +299,6 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .CLK_14              (CLK_14),
  .CLK_7               (CLK_7),
  .CLK_56              (CLK_56),
- .CLK_140             (CLK_140),
  
  .LED                 (LED_USER),
  
@@ -441,7 +439,7 @@ wire vsdmiso;
 sd_card sd_card
 (
 	.*,
-	.clk_spi(CLK_14),
+	.clk_spi(CLK_56),
 	.sdhc(1),
 	.sck(sdclk),
 	.ss(sdss | ~vsd_sel),

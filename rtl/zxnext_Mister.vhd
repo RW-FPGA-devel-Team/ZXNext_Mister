@@ -49,7 +49,6 @@ entity ZXNEXT_Mister is
 		CLK_14            : in    std_logic;
 		CLK_7             : in    std_logic;
 		CLK_56            : in    std_logic;
-		CLK_140           : in    std_logic;
 
 		LED					: out   std_logic                      := '1';
 				
@@ -176,20 +175,6 @@ use ieee.numeric_std.all;
 architecture rtl of ZXNEXT_Mister is
 
    
-    component pll 
-	 port 
-	 (
-		
-		refclk   : in  std_logic := '0'; --  refclk.clk
-		rst      : in  std_logic := '0'; --   reset.reset
-		outclk_0 : out std_logic;        -- outclk0.clk
-		outclk_1 : out std_logic;        -- outclk1.clk
-		outclk_2 : out std_logic;        -- outclk2.clk
-		outclk_3 : out std_logic;        -- outclk3.clk
-		outclk_4 : out std_logic;        -- outclk4.clk
-		locked   : out std_logic         -- locked.export 
-	);
-	end component;
 
 	
 	component ps2_mouse
@@ -1005,6 +990,7 @@ begin
    BUFGMUX1_i0 : entity work.BUFGMUX1
    port map
    (
+	   --reset_i => reset,
       I0 => CLK_3M5_CONT,
       I1 => CLK_7,
       S => zxn_cpu_speed(0),
@@ -1014,6 +1000,7 @@ begin
    BUFGMUX1_i1 : entity work.BUFGMUX1
    port map
    (
+	   --reset_i => reset,
       I0 => CLK_14,
       I1 => CLK_28,
       S => zxn_cpu_speed(0),
@@ -1023,6 +1010,7 @@ begin
    BUFGMUX1_i2 : entity work.BUFGMUX1
    port map
    (
+	   --reset_i => reset,
       I0 => CLK_i0,
       I1 => CLK_i1,
       S => zxn_cpu_speed(1),
@@ -1045,21 +1033,7 @@ begin
    CLK_28_PS2_218KHZ <= clk_28_div(6);                                                   -- 218 kHz clock 50% duty cycle for ps2 keyboard
    CLK_28_MEMBRANE_EN <= '1' when clk_28_div(8 downto 0) = ('1' & X"FF") else '0';       -- complete scan every 2.5 scanlines (0.018ms per row)
    
-   ------------------------------------------------------------
-   -- FPGA MULTI-CORE CONFIGURATION ---------------------------
-   ------------------------------------------------------------
-   
-   -- cores separated by 512k in flash
-   
-   -- fpga_config : entity work.flashboot
-   -- port map
-   -- (
-      -- reset_i     => reset_poweron,
-      -- clock_i     => CLK_14,
-      -- start_i     => zxn_flashboot,
-      -- spiaddr_i   => "0110" & "1011" & zxn_coreid & "0000000000000000000"
-   -- );
-
+  
    ------------------------------------------------------------
    -- SRAM INTERFACE ------------------------------------------
    ------------------------------------------------------------
@@ -1194,7 +1168,7 @@ begin
    process (CLK_28)
    begin
       if rising_edge(CLK_28) then
-         sram_data_in <= ram_data_io;
+            sram_data_in <= ram_data_io;
       end if;
    end process;
    
@@ -1206,8 +1180,7 @@ begin
       end if;
    end process;
    
-   --sram_data_in_byte <= sram_data_in;
-
+  
    
    --
    
@@ -1215,7 +1188,7 @@ begin
    begin
       if rising_edge(CLK_28) then
          if sram_port_a_read = '1' then
-            sram_port_a_dat <= sram_data_in; --sram_data_in_byte;
+            sram_port_a_dat <= sram_data_in; 
          end if;
       end if;
    end process;
@@ -1224,13 +1197,13 @@ begin
    begin
       if rising_edge(CLK_28) then
          if sram_port_b_read = '1' then
-            sram_port_b_dat <= sram_data_in; --sram_data_in_byte;
+            sram_port_b_dat <= sram_data_in; 
          end if;
       end if;
    end process;
    
-   sram_port_a_do <= sram_data_in when sram_port_a_read = '1' else sram_port_a_dat; -- sram_data_in_byte
-   sram_port_b_do <= sram_data_in when sram_port_b_read = '1' else sram_port_b_dat; -- sram_data_in_byte
+   sram_port_a_do <= sram_data_in when sram_port_a_read = '1' else sram_port_a_dat; 
+   sram_port_b_do <= sram_data_in when sram_port_b_read = '1' else sram_port_b_dat; 
    
    -- Data out (W)
    -- 28MHz cycle is partitioned into two periods some of which will carry we signal
@@ -1255,7 +1228,7 @@ begin
    
   
    ram_addr_o   <= sram_addr_active;  
-	ram_data_io  <= sram_data_active when sram_oe_n_active = '1' else (others => 'Z');
+	ram_data_io  <= sram_data_active when sram_oe_n_active = '1' and sram_we_n_o ='0' else (others => 'Z');
 	ram_oe_n_o   <= sram_oe_n_active;
    ram_ce_n_o   <= '0'; --sram_cs_n_active;
 	ram_we_n_o   <= sram_we_n_o;
