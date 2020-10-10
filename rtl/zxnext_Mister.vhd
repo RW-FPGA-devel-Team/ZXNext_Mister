@@ -155,6 +155,9 @@ entity ZXNEXT_Mister is
       -- i2c_scl_io        : inout std_logic                      := 'Z';
       -- i2c_sda_io        : inout std_logic                      := 'Z';
 
+      i2c_scl_o         : out std_logic                      := '1';
+      i2c_sda_i         : in std_logic                       := '1';
+      i2c_sda_o         : out std_logic                      := '1';
       -- -- ESP
       -- esp_gpio0_io      : inout std_logic                      := 'Z';
       -- esp_gpio2_io      : inout std_logic                      := 'Z';
@@ -1631,11 +1634,16 @@ begin
 
    -- i2c
    
-   i2c_scl_io <= '0' when zxn_i2c_scl_n_o = '0' else 'Z';
-   i2c_sda_io <= '0' when zxn_i2c_sda_n_o = '0' else 'Z';
+   --i2c_scl_io <= '0' when zxn_i2c_scl_n_o = '0' else 'Z';
+   --i2c_sda_io <= '0' when zxn_i2c_sda_n_o = '0' else 'Z';
 
-   zxn_i2c_scl_n_i <= i2c_scl_io;
-   zxn_i2c_sda_n_i <= i2c_sda_io;
+   --zxn_i2c_scl_n_i <= i2c_scl_io;
+   --zxn_i2c_sda_n_i <= i2c_sda_io;
+   
+	i2c_scl_o <= zxn_i2c_scl_n_o;
+        
+   zxn_i2c_sda_n_i <= i2c_sda_i;
+   i2c_sda_o <= zxn_i2c_sda_n_o;
 
    -- spi sd card
    

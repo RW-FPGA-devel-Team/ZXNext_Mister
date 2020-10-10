@@ -53,3 +53,7 @@ set_global_assignment -name VHDL_FILE rtl/zxnext_Mister.vhd
 set_global_assignment -name VHDL_FILE rtl/device/ctc_chan.vhd
 set_global_assignment -name VHDL_FILE rtl/device/ctc.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/misc/compressor.sv
+set_global_assignment -name VERILOG_FILE rtl/ds1307/DS1307.v
+set_global_assignment -name VERILOG_FILE rtl/ds1307/i2cSlave.v
+set_global_assignment -name VERILOG_FILE rtl/ds1307/registerInterface.v
+set_global_assignment -name VERILOG_FILE rtl/ds1307/serialInterface.v

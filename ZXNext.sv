@@ -244,7 +244,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1000)) hps_io
 	.ps2_mouse_clk_out(ps2_mouse_clk_in),
 	.ps2_mouse_data_out(ps2_mouse_data_in),
 	
-	.gamma_bus(gamma_bus)
+	.gamma_bus(gamma_bus),
+	.RTC(rtc)
 
 );
 
@@ -350,7 +351,11 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .hsync_o             (hs),
  .vsync_o             (vs),
  .HBlank					 (HBlank),
- .VBlank              (VBlank)
+ .VBlank              (VBlank),
+ .i2c_scl_o           (i2c_scl),
+ .i2c_sda_i           (i2c_sda_i),
+ .i2c_sda_o           (i2c_sda_o)
+
 
 );
 ///////////////////////////////////////////////////
@@ -482,5 +487,19 @@ ltc2308_tape #(.CLK_RATE(28000000)) ltc2308_tape
   .active(tape_adc_act)
 );
 /////////////////////////
+// Instanciamos el RTC
+/////////////////////////
+
+wire i2c_scl, i2c_sda_i, i2c_sda_o;
+reg [64:0] rtc;
+
+DS1307 RTCWrapper(
+  .clk(clk_sys), 
+  .rst(!pll_locked),
+  .sda_o(i2c_sda_i),
+  .sda_i(i2c_sda_o),
+  .scl(i2c_scl),
+  .rtc(rtc)
+);
 
 endmodule
