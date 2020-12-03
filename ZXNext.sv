@@ -127,13 +127,15 @@ module emu
 
 assign USER_OUT = '1;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
-assign {SDRAM_DQML,SDRAM_DQMH,SDRAM_nRAS,SDRAM_CLK} = '0;
+assign {SDRAM_DQML,SDRAM_DQMH,SDRAM_nRAS,SDRAM_CLK} = 'Z;
+assign {UART_RTS, UART_DTR} = 0;
+
 assign AUDIO_S = 0;  // 1 - signed audio samples, 0 - unsigned
 assign AUDIO_MIX = status[4:3];
 
 assign LED_DISK = 0;
 assign LED_POWER = 0;
-assign BUTTONS = 0;
+//assign BUTTONS = 0;
 
 //////////////////////////////////////////////////////////////////
 
@@ -171,7 +173,7 @@ localparam CONF_STR = {
 //////////////////   HPS I/O   ///////////////////
 
 wire forced_scandoubler;
-wire  [1:0] buttons;
+//wire  [1:0] buttons;
 wire [63:0] status;
 wire [10:0] ps2_key;
 wire [24:0] ps2_mouse;
@@ -216,7 +218,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1000)) hps_io
 	.joystick_0(joy_A),
 	.joystick_1(joy_B),
 	
-	.buttons(buttons),
+	.buttons(BUTTONS),
 	.status(status),
 	
 	.sd_lba(sd_lba),
@@ -268,7 +270,7 @@ pll pll
 	
 );
 
-assign reset = RESET | status[0] | buttons[1] | !pll_locked | (status[14] && img_mounted);
+assign reset = RESET | status[0] | BUTTONS[1] | !pll_locked | (status[14] && img_mounted);
 
 
 
@@ -324,10 +326,8 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .sd_mosi_o           (sdmosi),
  .sd_miso_i           (sdmiso),
  
- .audio_left          (),
- .audio_right         (),
- .zxn_audio_L         (audio_l), 
- .zxn_audio_R         (audio_r),
+ .audio_left          (audio_l),
+ .audio_right         (audio_r),
  
  .ear_port_i          (~tape_in),
  
@@ -360,7 +360,7 @@ ZXNEXT_Mister  ZXNEXT_Mister
 );
 ///////////////////////////////////////////////////
 
-reg [11:0] audio_l, audio_r;
+reg [15:0] audio_l, audio_r;
 compressor compressor
 (
   clk_sys,

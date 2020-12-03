@@ -91,8 +91,8 @@ entity ZXNEXT_Mister is
 		
 		audio_left 			: out   std_logic_vector(15 downto 0)  := (others => 'Z');
 		audio_right			: out   std_logic_vector(15 downto 0)  := (others => 'Z');
-		zxn_audio_L       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
-      zxn_audio_R       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
+		--zxn_audio_L       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
+      --zxn_audio_R       : out   std_logic_vector(11 downto 0)  := (others => 'Z');
       -- K7
       ear_port_i        : in    std_logic;
     
@@ -411,8 +411,8 @@ architecture rtl of ZXNEXT_Mister is
    signal zxn_audio_L_pre        : std_logic_vector(12 downto 0);
    signal zxn_audio_R_pre        : std_logic_vector(12 downto 0);
    
-   --signal zxn_audio_L            : std_logic_vector(11 downto 0);
-   --signal zxn_audio_R            : std_logic_vector(11 downto 0);
+   signal zxn_audio_L            : std_logic_vector(11 downto 0);
+   signal zxn_audio_R            : std_logic_vector(11 downto 0);
 
    signal zxn_audio_M_s          : std_logic_vector(13 downto 0);
    signal zxn_audio_M            : std_logic_vector(14 downto 0);
@@ -693,7 +693,7 @@ architecture rtl of ZXNEXT_Mister is
 
 begin
 
-	LED <= zxn_spi_ss_sd0_n;
+	LED <= not zxn_spi_ss_sd0_n;
 	
    extras_io <= 'Z';
 	
@@ -1246,10 +1246,10 @@ begin
    -- AUDIO ---------------------------------------------------
    ------------------------------------------------------------
 
-	process (CLK_28)
+  process (CLK_28,zxn_audio_L,zxn_audio_R)
   begin
-     audio_left  <= zxn_audio_L_pre(11 downto 0) & zxn_audio_L_pre(11 downto 8);
-     audio_right <= zxn_audio_R_pre(11 downto 0) & zxn_audio_L_pre(11 downto 8);
+     audio_left  <= zxn_audio_L(11 downto 0) & zxn_audio_L(11 downto 8);
+     audio_right <= zxn_audio_R(11 downto 0) & zxn_audio_R(11 downto 8);
   end process;
  
 
