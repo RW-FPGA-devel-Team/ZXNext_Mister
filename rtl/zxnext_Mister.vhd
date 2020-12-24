@@ -1121,14 +1121,14 @@ begin
 	
 -- Select active sram chip
    
---   process (zxn_ram_a_req, zxn_ram_b_req)
---   begin
---      if zxn_ram_a_req = '1' or zxn_ram_b_req = '1' then
---         sram_cs_n <= '0';
---      else
---         sram_cs_n <= '1';
---      end if;
---   end process;
+   process (zxn_ram_a_req, zxn_ram_b_req)
+   begin
+      if zxn_ram_a_req = '1' or zxn_ram_b_req = '1' then
+         sram_cs_n <= '0';
+      else
+         sram_cs_n <= '1';
+      end if;
+   end process;
 
 
  
@@ -1233,7 +1233,7 @@ begin
    ram_addr_o   <= sram_addr_active;  
 	ram_data_io  <= sram_data_active when sram_oe_n_active = '1' and sram_we_n_o ='0' else (others => 'Z');
 	ram_oe_n_o   <= sram_oe_n_active;
-   ram_ce_n_o   <= '0'; --sram_cs_n_active;
+   ram_ce_n_o   <= sram_cs_n_active;
 	ram_we_n_o   <= sram_we_n_o;
 	
    zxn_ram_a_di <= sram_port_a_do;
@@ -1246,10 +1246,13 @@ begin
    -- AUDIO ---------------------------------------------------
    ------------------------------------------------------------
 
-  process (CLK_28,zxn_audio_L,zxn_audio_R)
+  process (CLK_28,zxn_audio_L_pre,zxn_audio_R_pre)
   begin
-     audio_left  <= '0' & zxn_audio_L(11 downto 0) & zxn_audio_L(11 downto 9);
-     audio_right <= '0' & zxn_audio_R(11 downto 0) & zxn_audio_R(11 downto 9);
+	  --audio_left  <= '0' & zxn_audio_L_pre(12 downto 0) & "00";
+     --audio_right <= '0' & zxn_audio_R_pre(12 downto 0) & "00";
+	  audio_left <= std_logic_vector(resize(signed(zxn_audio_L_pre), audio_left'length));
+	  audio_right<= std_logic_vector(resize(signed(zxn_audio_R_pre), audio_right'length));
+
   end process;
  
 
@@ -2031,7 +2034,6 @@ begin
 
    zxn_audio_L <= (others => '1') when zxn_audio_L_pre(12) = '1' else zxn_audio_L_pre(11 downto 0);
    zxn_audio_R <= (others => '1') when zxn_audio_R_pre(12) = '1' else zxn_audio_R_pre(11 downto 0);
-	
 	   -- active high START/MODE A/X B/Y/F2 C/Z/F1 U D L R   (oficially -  active high =  X Z Y START A C B U D L R )
 --	zxn_joy_left 	<=  "000" & not (joyA(6) & "1" & joyA(5) & joyA(4) & joyA(0) & joyA(1) & joyA(2) & joyA(3));
 --	zxn_joy_right	<=  "000" & not (joyB(6) & "1" & joyB(5) & joyB(4) & joyB(0) & joyB(1) & joyB(2) & joyB(3)); 

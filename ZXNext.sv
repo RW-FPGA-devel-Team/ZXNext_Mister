@@ -130,7 +130,7 @@ assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DD
 assign {SDRAM_DQML,SDRAM_DQMH,SDRAM_nRAS,SDRAM_CLK} = 'Z;
 assign {UART_RTS, UART_DTR} = 0;
 
-assign AUDIO_S = 0;  // 1 - signed audio samples, 0 - unsigned
+assign AUDIO_S = 1;  // 1 - signed audio samples, 0 - unsigned
 assign AUDIO_MIX = status[4:3];
 
 assign LED_DISK = 0;
@@ -326,8 +326,8 @@ ZXNEXT_Mister  ZXNEXT_Mister
  .sd_mosi_o           (sdmosi),
  .sd_miso_i           (sdmiso),
  
- .audio_left          (audio_l),
- .audio_right         (audio_r),
+ .audio_left          (AUDIO_L),
+ .audio_right         (AUDIO_R),
  
  .ear_port_i          (~tape_in),
  
@@ -360,15 +360,15 @@ ZXNEXT_Mister  ZXNEXT_Mister
 );
 ///////////////////////////////////////////////////
 
-reg [15:0] audio_l, audio_r;
-compressor compressor
-(
-  clk_sys,
-  audio_l,
-  audio_r,
-  AUDIO_L,
-  AUDIO_R
-);
+//reg [15:0] audio_l, audio_r;
+//compressor compressor
+//(
+//  clk_sys,
+//  audio_l,
+//  audio_r,
+//  AUDIO_L,
+//  AUDIO_R
+//);
 
 ///////////////////////////////////////////////////
 

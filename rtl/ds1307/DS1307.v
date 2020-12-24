@@ -70,13 +70,13 @@ input [64:0] rtc;
 //0x7 -> 8'b0
 
 
-reg [7:0] Sec	= 0;
-reg [7:0] Min	= 0;
-reg [7:0] Hour	= 0;
-reg [7:0] wDay	= 1;
-reg [7:0] Day	= 1;
-reg [7:0] Mon	= 1;
-reg [7:0] Year	= 0;
+//reg [7:0] Sec	= 0;
+//reg [7:0] Min	= 0;
+//reg [7:0] Hour	= 0;
+//reg [7:0] wDay	= 1;
+//reg [7:0] Day	= 1;
+//reg [7:0] Mon	= 1;
+//reg [7:0] Year	= 0;
 reg [7:0] Reg7	= 0;
 
 
@@ -89,7 +89,7 @@ reg  [7:0] month_reg = 1;
 reg  [7:0] year_reg = 0;			
 
 reg H24 = 1; 	//1= 24H format - 0= 12H Format(AM/PM)
-reg AMPM = 0;	//0= AM - 1=PM
+//reg AMPM = 0;	//0= AM - 1=PM
 reg  [1:0] leap_reg = 0;
 
 reg a_reg = 0;
